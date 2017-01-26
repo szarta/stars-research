@@ -12,7 +12,7 @@
 # build-ups.  The graph looks similar enough to the originals, I edit in the
 # damage zones for Warp 9-10 and the battle speed after generating here.
 #
-# They are a little large than the originals, by design.
+# They are a little larger than the originals, by design.
 #
 # :author: Brandon Arrendondo
 # :license: MIT
