@@ -186,18 +186,13 @@ def calculate_planet_value(p_grav, p_temp, p_rad,
         normalized_grav_min = normalize_gravity(r_grav_min)
         normalized_grav_max = normalize_gravity(r_grav_max)
         normalized_grav_mid = (normalized_grav_max + normalized_grav_min) / 2
-        logging.debug("min={0!s},max={1!s},mid={2!s}".format(
-            normalized_grav_min, normalized_grav_max, normalized_grav_mid))
 
         normalized_p_grav = normalize_gravity(p_grav)
-        logging.debug("grav={0!s}, normalized={1!s}".format(
-            p_grav, normalized_p_grav))
 
         distance_to_center = abs(normalized_p_grav - normalized_grav_mid)
         hab_radius = normalized_grav_mid - normalized_grav_min
 
         (pv, r, ic) = calculate_hab_points(hab_radius, distance_to_center)
-        logging.debug("grav pv={0!s}".format(pv))
         planet_value_points += pv
         red_value += r
         ideality = int(ideality * ic)
@@ -208,18 +203,12 @@ def calculate_planet_value(p_grav, p_temp, p_rad,
         normalized_temp_min = normalize_temperature(r_temp_min)
         normalized_temp_max = normalize_temperature(r_temp_max)
         normalized_temp_mid = (normalized_temp_max + normalized_temp_min) / 2
-        logging.debug("min={0!s},max={1!s},mid={2!s}".format(
-            normalized_temp_min, normalized_temp_max, normalized_temp_mid))
-
         normalized_p_temp = normalize_temperature(p_temp)
-        logging.debug("temp={0!s}, normalized={1!s}".format(
-            p_temp, normalized_p_temp))
 
         distance_to_center = abs(normalized_p_temp - normalized_temp_mid)
         hab_radius = normalized_temp_mid - normalized_temp_min
 
         (pv, r, ic) = calculate_hab_points(hab_radius, distance_to_center)
-        logging.debug("temp pv={0!s}".format(pv))
         planet_value_points += pv
         red_value += r
         ideality = int(ideality * ic)
@@ -227,18 +216,10 @@ def calculate_planet_value(p_grav, p_temp, p_rad,
     if(r_rad_immune):
         planet_value_points += 10000
     else:
-        logging.debug("rad={0!s}".format(p_rad))
         r_rad_mid = (int(r_rad_min) + int(r_rad_max)) / 2
-        logging.debug("rad mid={0!s}".format(r_rad_mid))
-
         distance_to_center = abs(int(p_rad) - r_rad_mid)
-        logging.debug("rad d2c={0!s}".format(distance_to_center))
-
         hab_radius = int(r_rad_mid) - int(r_rad_min)
-        logging.debug("rad radius={0!s}".format(hab_radius))
-
         (pv, r, ic) = calculate_hab_points(hab_radius, distance_to_center)
-        logging.debug("rad pv={0!s}".format(pv))
         planet_value_points += pv
         red_value += r
         ideality = int(ideality * ic)
@@ -247,8 +228,6 @@ def calculate_planet_value(p_grav, p_temp, p_rad,
         return -1 * red_value
 
     planet_value_points = int(math.sqrt(planet_value_points / 3.0) + 0.9)
-    logging.debug("{0!s}".format(planet_value_points))
-    logging.debug("{0!s}".format(ideality))
     planet_value_points = (planet_value_points * ideality) // 10000
     return planet_value_points
 
@@ -290,6 +269,8 @@ def main(argv):
     if args.r_rad_min == "-1" and args.r_rad_max == "-1":
         rad_immune = True
 
+    matches = 0
+    failures = 0
     with open(args.planets, "r") as f:
         i = 0
         for l in f:
@@ -328,8 +309,23 @@ def main(argv):
 
             result = subprocess.check_output(cmd, shell=True)
 
-            logging.info("{0!s}: Expected: {1!s}, CCalc: {2!s}, Actual: {3!s}".format(
-                line_arr[1], value, result.strip(), line_arr[-4]))
+            c_result = int(result.strip())
+            actual = int(line_arr[-4].replace("%", ""))
+            py_result = int(value)
+
+            if c_result == actual and py_result == actual:
+                logging.debug("{0!s}: Expected: {1!s}, CCalc: {2!s}, Actual: {3!s}".format(
+                    line_arr[1], py_result, c_result, actual))
+
+                matches += 1
+            else:
+                logging.debug("{0!s}: Expected: {1!s}, CCalc: {2!s}, Actual: {3!s}".format(
+                    line_arr[1], py_result, c_result, actual))
+
+                failures += 1
+
+        logging.info("Matches: {0!s}, Failures: {1!s}".format(matches, failures))
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])
